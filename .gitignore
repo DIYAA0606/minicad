@@ -1,0 +1,31 @@
+# Build directory
+build/
+bin/
+lib/
+out/
+
+# IDE & Editor files
+.vscode/
+.vs/
+.idea/
+*.user
+*.suo
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Compiled artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# CMake artifacts
+CMakeUserPresets.json
+compile_commands.json
