@@ -8,10 +8,12 @@
 #include "geometry/Rectangle.h"
 #include "geometry/Vector2D.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <unordered_set>
 
 using namespace minicad;
@@ -90,29 +92,49 @@ int main() {
               << sceneBox.minPt.x << ", " << sceneBox.minPt.y << "] to ["
               << sceneBox.maxPt.x << ", " << sceneBox.maxPt.y << "]\n\n";
 
-    // 3. Initial Collision Check
+    // 3. Baseline Collision Check (structural contacts by design: bolt holes
+    //    seated in the plate, gusset resting flush on the plate, etc.)
+    //    These are NOT the collision we want to visualize -- they're
+    //    intentional assembly contacts, so we capture them as a baseline
+    //    to exclude from highlighting later.
     std::cout << "[Step 3] Running broadphase AABB + narrowphase SAT collision detection...\n";
-    auto collisionPairs = scene.findIntersectingPairs();
-    std::cout << "  Initial intersecting pairs detected: " << collisionPairs.size() << "\n";
-    for (const auto& [i, j] : collisionPairs) {
-        std::cout << "    Collision: Part #" << i << " (" << scene.getShape(i)->getTypeName()
+    auto baselinePairs = scene.findIntersectingPairs();
+    std::cout << "  Baseline structural contacts (by design): " << baselinePairs.size() << "\n";
+    for (const auto& [i, j] : baselinePairs) {
+        std::cout << "    Contact: Part #" << i << " (" << scene.getShape(i)->getTypeName()
                   << ") <---> Part #" << j << " (" << scene.getShape(j)->getTypeName() << ")\n";
     }
     std::cout << "\n";
+
+    // Store baseline as an ordered set of pairs for fast membership testing
+    std::set<std::pair<size_t, size_t>> baselineSet(baselinePairs.begin(), baselinePairs.end());
 
     // 4. Command Pattern Demonstration: Move Sensor into Deep Collision
     std::cout << "[Step 4] Executing Command: Translate sensor bracket by (-50, 20)...\n";
     Shape* sensorShape = scene.getShape(sensorIdx);
     scene.executeCommand(std::make_unique<TranslateCommand>(*sensorShape, Vector2D(-50.0, 20.0)));
 
-    collisionPairs = scene.findIntersectingPairs();
-    std::cout << "  New collision count after translation: " << collisionPairs.size() << "\n";
+    auto afterPairs = scene.findIntersectingPairs();
+
+    // Only treat a pair as a "new" collision if it wasn't already touching
+    // in the baseline (pre-translate) state. This isolates the collision
+    // actually introduced by the command from pre-existing structural
+    // contacts (bolt holes in the plate, gusset resting on the plate, etc.)
     std::unordered_set<size_t> collidingShapeIndices;
-    for (const auto& [i, j] : collisionPairs) {
-        std::cout << "    Collision: Part #" << i << " (" << scene.getShape(i)->getTypeName()
+    std::vector<std::pair<size_t, size_t>> newCollisions;
+    for (const auto& pair : afterPairs) {
+        if (baselineSet.find(pair) == baselineSet.end()) {
+            newCollisions.push_back(pair);
+            collidingShapeIndices.insert(pair.first);
+            collidingShapeIndices.insert(pair.second);
+        }
+    }
+
+    std::cout << "  Total intersecting pairs after translation: " << afterPairs.size() << "\n";
+    std::cout << "  Newly introduced collisions (excluding baseline contacts): " << newCollisions.size() << "\n";
+    for (const auto& [i, j] : newCollisions) {
+        std::cout << "    NEW Collision: Part #" << i << " (" << scene.getShape(i)->getTypeName()
                   << ") <---> Part #" << j << " (" << scene.getShape(j)->getTypeName() << ")\n";
-        collidingShapeIndices.insert(i);
-        collidingShapeIndices.insert(j);
     }
     std::cout << "\n";
 
@@ -121,7 +143,8 @@ int main() {
     std::cout << "  Calling scene.undo()...\n";
     scene.undo();
     auto undoCollisions = scene.findIntersectingPairs();
-    std::cout << "  Collision count after undo: " << undoCollisions.size() << " (Restored previous state!)\n";
+    std::cout << "  Collision count after undo: " << undoCollisions.size()
+              << " (should match baseline: " << baselinePairs.size() << ")\n";
 
     std::cout << "  Calling scene.redo()...\n";
     scene.redo();
@@ -142,9 +165,9 @@ int main() {
     exporter.exportToFile(scene, outputPath, collidingShapeIndices);
 
     std::cout << "  Successfully exported SVG visualization to: " << outputPath << "\n";
-    std::cout << "  - Colliding parts highlighted in red alert styling.\n";
-    std::cout << "  - Non-colliding parts rendered in standard CAD blue.\n";
-    std::cout << "  - Dashed gray boxes represent broadphase Axis-Aligned Bounding Boxes (AABBs).\n\n";
+    std::cout << "  - Parts newly colliding due to the translate are highlighted in red alert styling.\n";
+    std::cout << "  - Pre-existing structural contacts (bolt holes, gusset-plate seating) render in standard CAD blue.\n";
+    std::cout << "  - Dashed gray boxes represent broadphase Axis-Aligned Bounding Boxes (AABBs) for every part.\n\n";
 
     std::cout << "MiniCAD Demo completed successfully.\n";
     return 0;

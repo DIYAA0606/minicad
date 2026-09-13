@@ -16,10 +16,10 @@
   <!-- AABB for Shape #5 (Rectangle) -->
   <rect x="264.779" y="166.675" width="90.4423" height="66.6506" fill="none" stroke="#A0AEC0" stroke-width="1" stroke-dasharray="4,4" />
   <!-- Geometry Elements -->
-  <polygon points="70,300 430,300 430,340 70,340" stroke="#C53030" stroke-width="2" fill="#FED7D7" fill-opacity="0.6" />
-  <polygon points="140,300 360,300 310,150 190,150" stroke="#C53030" stroke-width="2" fill="#FED7D7" fill-opacity="0.6" />
+  <polygon points="70,300 430,300 430,340 70,340" stroke="#2B6CB0" stroke-width="2" fill="#EBF8FF" fill-opacity="0.6" />
+  <polygon points="140,300 360,300 310,150 190,150" stroke="#2B6CB0" stroke-width="2" fill="#EBF8FF" fill-opacity="0.6" />
   <circle cx="250" cy="200" r="35" stroke="#C53030" stroke-width="2" fill="#FED7D7" fill-opacity="0.6" />
-  <circle cx="100" cy="320" r="12" stroke="#C53030" stroke-width="2" fill="#FED7D7" fill-opacity="0.6" />
-  <circle cx="400" cy="320" r="12" stroke="#C53030" stroke-width="2" fill="#FED7D7" fill-opacity="0.6" />
+  <circle cx="100" cy="320" r="12" stroke="#2B6CB0" stroke-width="2" fill="#EBF8FF" fill-opacity="0.6" />
+  <circle cx="400" cy="320" r="12" stroke="#2B6CB0" stroke-width="2" fill="#EBF8FF" fill-opacity="0.6" />
   <polygon points="277.279,166.675 355.221,211.675 342.721,233.325 264.779,188.325" stroke="#C53030" stroke-width="2" fill="#FED7D7" fill-opacity="0.6" />
 </svg>
